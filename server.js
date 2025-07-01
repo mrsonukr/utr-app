@@ -1,15 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { GmailMonitor } from './services/gmailMonitor.js';
 import { database } from './config/database.js';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,7 +12,6 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 
 // Initialize database connection
 let gmailMonitor;
@@ -36,15 +30,6 @@ async function initializeApp() {
     process.exit(1);
   }
 }
-
-// Routes
-app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/wallet', (req, res) => {
-  res.sendFile(join(__dirname, 'public', 'wallet.html'));
-});
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -111,7 +96,7 @@ app.get('/api/monitor/status', async (req, res) => {
   }
 });
 
-// Get recent transactions
+// Get all transactions
 app.get('/api/transactions', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
@@ -223,8 +208,20 @@ process.on('SIGTERM', async () => {
 initializeApp().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📧 Gmail Transaction Monitor ready!`);
-    console.log(`💰 Wallet page available at http://localhost:${PORT}/wallet`);
+    console.log(`📧 Gmail Transaction Monitor API ready!`);
     console.log(`🗄️ Connected to MongoDB: ${process.env.MONGODB_URI?.split('@')[1]?.split('/')[0] || 'Unknown'}`);
+    console.log('\n📋 Available API Endpoints:');
+    console.log('  GET  /api/health - Health check');
+    console.log('  GET  /api/auth-url - Get Gmail auth URL');
+    console.log('  GET  /api/auth/callback - OAuth callback');
+    console.log('  POST /api/monitor/start - Start monitoring');
+    console.log('  POST /api/monitor/stop - Stop monitoring');
+    console.log('  GET  /api/monitor/status - Get status');
+    console.log('  GET  /api/transactions - Get all transactions');
+    console.log('  GET  /api/transactions/unclaimed - Get unclaimed transactions');
+    console.log('  POST /api/transactions/claim - Claim transaction by UTR');
+    console.log('  GET  /api/transactions/latest - Get latest transaction');
+    console.log('  GET  /api/transactions/stats - Get transaction stats');
+    console.log('  DELETE /api/transactions - Clear all transactions');
   });
 });
